@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="viewport" content="user-scalable=yes, initial-scale=1, maximum-scale=1, minimum-scale=1,  target-densitydpi=device-dpi" />
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="css/index.css" />
+		<link rel="stylesheet" type="text/css" href="mobileui/style.css" />
+        <title>我的健康App</title>
+    </head>
+	<body class="padding blue-50 has-header has-sub-header">
+	<div class="header blue-800">
+    <h1>我的健康App</h1>
+	</div>
+	<div class="header blue-800 sub shadow tab">
+	<button id="ionMeasure" class="icon ion-android-person active" onclick="openTab('ionMeasure','tabMeasure')">測量</button>
+	<button id="ionCalendar" class="icon ion-android-calendar" onclick="openTab('ionCalendar','tabCalendar')">歷史記錄</button>
+	<button id="ionStats" class="icon ion-stats-bars " onclick="openTab('ionStats','tabStats')">統計表</button>
+	<button id="ionAbout" class="icon ion-android-people" onclick="openTab('ionAbout','tabAbout')">關於</button>
+	</div>
+	<div class="tab-content active" id="tabMeasure">
+	<h2 class="text-strong padding text-blue">測量</h2>
+		<div id="mainPage" class=" align-center">
+                <ul id="deviceList">                    
+                </ul>
+                <button id="refreshButton">偵測藍芽連線</button> <button id="disconnectButton" >結束藍芽連線</button>
+            </div>
+			<div id="detailPage1" class=" align-center">
+                <div id="resultDiv"></div>
+                <div id="heartwrapper"><div id="pulsingheart"></div></div>
+				<br><br><br><br><br>
+				<h1 class="padding text-red" id="PPGhtml" style="font-size:25px;"></h1>
+				<h1 class="padding text-green" id="SPO2html" style="font-size:25px;"></h1>
+				<div id="hr"></div>
+				<div id="spo2"></div>
+				<br><br>
+				<button id="butsave" onclick="saveMe()" class="green ion-ios-compose-outline big"> 存 檔 </button>
+				
+            </div> 
+	</div>
+	<div class="tab-content "  scroll="true"  id="tabCalendar">
+    <h2 class="text-strong padding text-blue">歷史記錄</h2>
+    <h2> Your Record </h2>
+		<span id="myrecord"></span>
+		<table id="mytable">
+		<thead>
+		<tr>
+		<th>日期 Date</th>
+		<th>心率 PPG</th>
+		<th>血氧 SpO2</th>
+		</tr>
+		</thead>
+		<tbody>
+		</tbody>
+		</table>
+	
+	</div>
+	<div class="tab-content" id="tabStats">
+    <h2 class="text-strong padding text-blue">統計表</h2>
+    <h2> Recent Statistics </h2>
+	</div>
+	<div class="tab-content" id="tabAbout">
+    <h2 class="text-strong padding text-blue">關於</h2>
+	<h2> About Us </h2>
+	<h2>我們是一群熱愛軟硬韌體整合開發的團隊，如果您有進一步開發的構想，歡迎與我們聯繫！</h2>
+	<h2>陳光彥組長 0911113190 54975x2@gmail.com</h2>
+	<h2>賴紀廷 0921106847 lai_097@hotmail.com</h2>
+	<h2>林杰儒 0922487102 jerrypokemonvgc@gmail.com</h2>
+	<h2>林昱澍 0952123456 yushulin@gmail.com</h2>
+	<h2>鐘偉立 0988720502 weili0505@gmail.com</h2>
+	</div>
+	</body>
+	<script type="text/javascript" src="cordova.js"></script>
+    <script type="text/javascript" src="js/index.js"></script>	
+	<script type="text/javascript" src="js/algorithm.js"></script>	
+    <script type="text/javascript">app.initialize();</script>
+
+
+<script>
+function saveMe(){
+	var today = new Date().Format("yyyy-MM-dd");
+	var hr = document.getElementById('hr').innerHTML;
+	var spo2 = document.getElementById('spo2').innerHTML;
+	if(hr>0 && spo2>0){
+		var mytxt='';
+		$.ajax({
+				url: "https://aiot01.com/aime/myapp/save.php",
+				type: "POST",
+				data: {
+					hr: hr,
+					spo2: spo2				
+				},
+				cache: false,
+				success: function(dataResult){
+					var dataResult = JSON.parse(dataResult);
+					if(dataResult.statusCode==200){
+						//Data added successfully	
+						alert("存入成功!");	
+						var tableRef = document.getElementById('mytable').getElementsByTagName('tbody')[0];
+						var row = tableRef.insertRow(0);
+						var cell0 = row.insertCell(0);
+						var cell1 = row.insertCell(1);
+						var cell2 = row.insertCell(2);
+						cell0.innerHTML = today;
+						cell1.innerHTML = hr+'/min';
+						cell2.innerHTML = spo2+'%';
+					}
+					else if(dataResult.statusCode==201){
+					   alert("Error occured!");
+					}	
+				}
+		});
+	}else{
+		alert('尚未有數據可以存檔');
+	}
+}
+
+
+//格式化日期時間使用的函式
+Date.prototype.Format = function (fmt) { 
+    var o = {
+        "M+": this.getMonth() + 1, //月份 
+        "d+": this.getDate(), //日 
+        "h+": this.getHours(), //時
+        "m+": this.getMinutes(), //分 
+        "s+": this.getSeconds(), //秒 
+        "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+        "S": this.getMilliseconds() //毫秒 
+    };
+    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o)
+    if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+}
+
+
+</script>
+	
+<script>
+//從資料庫讀history資料顯示在歷史紀錄頁籤中
+var xhttp=new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+  if (this.readyState == 4 && this.status == 200) {
+		var data = JSON.parse(this.responseText);
+		var mytxt='';
+		for(i=0;i<data.length;i++){
+			//let tableRef = document.getElementById('mytable');
+			var tableRef = document.getElementById('mytable').getElementsByTagName('tbody')[0];
+			var row = tableRef.insertRow(0);
+			var cell0 = row.insertCell(0);
+			var cell1 = row.insertCell(1);
+			var cell2 = row.insertCell(2);
+			cell0.innerHTML = data[i].testdate;
+			cell1.innerHTML = data[i].hr+'/min';
+			cell2.innerHTML = data[i].spo2+'%';
+			
+			
+			//mytxt = mytxt + ' ' + data[i].testdate + ' 心率:' + data[i].hr + ' 血氧' + data[i].spo2 + '% <br>';
+		}
+    document.getElementById("myrecord").innerHTML = mytxt;
+	}
+};
+
+
+xhttp.open("POST", "https://aiot01.com/aime/myapp/db.php", true);
+xhttp.send();
+</script>
+
+
+
+
+
+<style>
+p{
+	font-size:16px;
+}
+
+#demo{
+	font-size:16px;
+}
+
+/*****************
+Pulsing Heart CSS
+*****************/
+#heartwrapper {
+  position: absolute;
+  margin-left:120px;
+  margin-top: 0px;
+  animation:pulse 1s infinite;
+}
+
+#pulsingheart { 
+  position: relative; 
+  width: 100px; 
+  height: 90px;
+} 
+
+#pulsingheart:before, #pulsingheart:after { 
+  position: absolute; 
+  content: ""; 
+  left: 50px; 
+  top: 0; 
+  width: 50px; 
+  height: 80px; 
+  background: #aa0000; 
+  border-radius: 50px 50px 0 0; 
+  transform: rotate(-45deg);  
+  transform-origin: 0 100%;
+  animation:pulsecolor 1s infinite;
+} 
+
+#pulsingheart:after { 
+  left: 0; 
+  transform: rotate(45deg); 
+  transform-origin :100% 100%;
+  animation:pulsecolor 1s infinite;
+}
+
+@keyframes pulse {
+	10% {transform: scale(1.1)}
+}
+
+@keyframes pulsecolor {
+  10% {background: #dd0000}
+}
+</style>
+
+
+<style>
+#mytable {
+  font-weight:bold;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#mytable td, #history th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#mytable tr:nth-child(even){background-color: #ffffcc;}
+#mytable tr:nth-child(odd){background-color: #ffffff;}
+
+
+#mytable th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #739900;
+  color: white;
+}
+</style>
+
+
+	
+</html>
+
